@@ -11,24 +11,14 @@ import MapKit
 
 class MapViewController: UIViewController {
 
+    lazy var networkManager = NetworkManager()
+    
     @IBOutlet weak var mapView: MKMapView!
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        let request = Router.GeoQuery(lat: 34.022276, lon: -118.410067).urlRequest
-        let task = NSURLSession.sharedSession().dataTaskWithRequest(request) { (data, response, error) in
-            guard let data = data else {
-                return
-            }
-            do {
-                let json = try NSJSONSerialization.JSONObjectWithData(data, options:[]) as? [String: AnyObject]
-                dlog("json: \(json)")
-                
-            } catch let error as NSError {
-                dlog("Can't get JSON: \(error.localizedDescription)")
-            }
-        }
-        task.resume()
+        networkManager.delegate = self
+        networkManager.getPhotosByLocation(34.022276, lon: -118.410067)
     }
 
     override func didReceiveMemoryWarning() {
@@ -37,14 +27,16 @@ class MapViewController: UIViewController {
     }
     
 
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
-        // Get the new view controller using segue.destinationViewController.
-        // Pass the selected object to the new view controller.
+    func loadData() {
+        
     }
-    */
+}
 
+extension MapViewController: NetworkManagerDelegate {
+    func foundPhotosByLocation(basePhotos: [BasePhoto]) {
+        networkManager.getLocationForPhotos(basePhotos)
+    }
+    func addedCoordinatesToPhotos(photos: [Photo]) {
+        dlog(photos)
+    }
 }

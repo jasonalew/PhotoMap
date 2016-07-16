@@ -10,9 +10,18 @@ import Foundation
 
 struct Flickr {
     static let method = "method"
+    static let photo = "photo"
+    static let location = "location"
     static let lat = "lat"
     static let lon = "lon"
+    static let latitude = "latitude"
+    static let longitude = "longitude"
     static let photoId = "photo_id"
+    static let title = "title"
+    static let id = "id"
+    static let farm = "farm"
+    static let server = "server"
+    static let secret = "secret"
     static let photosSearch = "flickr.photos.search"
     static let geoLocation = "flickr.photos.geo.getLocation"
 }

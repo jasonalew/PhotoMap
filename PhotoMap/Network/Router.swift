@@ -29,7 +29,6 @@ enum Encoding {
                 }
             }
             urlComponents?.queryItems = queryItems
-            dlog(urlComponents?.URL)
             request.URL = urlComponents?.URL
         case .JSON:
             // Add JSON to the request HTTPBody
@@ -51,7 +50,7 @@ enum HTTPMethod: String {
 
 enum Router {
     case GeoQuery(lat: Float, lon: Float)
-    case GetGeoLocation(photoId: Int)
+    case GetGeoLocation(photoId: String)
 }
 
 struct Keys {
