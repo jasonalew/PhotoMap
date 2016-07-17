@@ -14,6 +14,8 @@ struct Flickr {
     static let location = "location"
     static let lat = "lat"
     static let lon = "lon"
+    static let extras = "extras"
+    static let geo = "geo"
     static let latitude = "latitude"
     static let longitude = "longitude"
     static let photoId = "photo_id"
