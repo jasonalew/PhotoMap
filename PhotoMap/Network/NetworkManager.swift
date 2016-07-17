@@ -10,8 +10,7 @@ import UIKit
 import MapKit
 
 protocol NetworkManagerDelegate: class {
-    func foundPhotosByLocation(basePhotos: [BasePhoto])
-    func addedCoordinatesToPhotos(photos: [Photo])
+    func foundPhotosByLocation(basePhotos: [Photo])
 }
 
 class NetworkManager {
@@ -59,53 +58,6 @@ class NetworkManager {
             }
         }
         task.resume()
-        showNetworkActivityIndicator(false)
-    }
-    
-    func getLocationForPhotos(basePhotos: [BasePhoto]) {
-        showNetworkActivityIndicator(true)
-        var photos = [Photo]()
-        for (index, basePhoto) in basePhotos.enumerate() {
-            let task = defaultSession.dataTaskWithRequest(Router.GetGeoLocation(photoId: basePhoto.id).urlRequest, completionHandler: { [weak self](data, response, error) in
-                if let error = error {
-                    dlog(error.localizedDescription)
-                    self?.showNetworkActivityIndicator(false)
-                    return
-                } else if let response = response as? NSHTTPURLResponse {
-                    guard response.statusCode >= 200 && response.statusCode < 400 else {
-                        dlog("Invalid server response")
-                        self?.showNetworkActivityIndicator(false)
-                        return
-                    }
-                    guard let data = data else {
-                        dlog("Couldn't get data")
-                        self?.showNetworkActivityIndicator(false)
-                        return
-                    }
-                    do {
-                        if let json = try NSJSONSerialization.JSONObjectWithData(data, options: []) as? [String: AnyObject],
-                        let coordinate = Photo.parseLocationJson(json) {
-                            
-                            let photo = Photo(basePhoto: basePhoto, coordinate: coordinate)
-                            photos.append(photo)
-                            dispatch_async(dispatch_get_main_queue(), { 
-                                if index == basePhotos.count - 1 {
-                                    if let strongSelf = self {
-                                        strongSelf.delegate?.addedCoordinatesToPhotos(photos)
-                                    }
-                                }
-                            })
-                            
-                        }
-                        
-                    } catch let error as NSError {
-                        dlog(error.localizedDescription)
-                        self?.showNetworkActivityIndicator(false)
-                    }
-                }
-            })
-            task.resume()
-        }
         showNetworkActivityIndicator(false)
     }
 }

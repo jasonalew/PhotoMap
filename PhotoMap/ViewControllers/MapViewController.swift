@@ -28,23 +28,19 @@ class MapViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-
     func loadData() {
         
     }
     
     func updateMapLocation(coordinate: CLLocationCoordinate2D) {
-        let regionRadius: CLLocationDistance = 1000
+        let regionRadius: CLLocationDistance = 2000
         let coordinateRegion = MKCoordinateRegionMakeWithDistance(coordinate, regionRadius * 2.0, regionRadius * 2.0)
         mapView.setRegion(coordinateRegion, animated: true)
     }
 }
 
 extension MapViewController: NetworkManagerDelegate {
-    func foundPhotosByLocation(basePhotos: [BasePhoto]) {
-        networkManager.getLocationForPhotos(basePhotos)
-    }
-    func addedCoordinatesToPhotos(photos: [Photo]) {
+    func foundPhotosByLocation(photos: [Photo]) {
         mapView.addAnnotations(photos)
     }
 }

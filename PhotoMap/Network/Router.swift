@@ -77,19 +77,28 @@ extension Router: UrlRequest {
             var parameters: [String: AnyObject] = [
                 "format": "json",
                 "nojsoncallback": "1",
-//                "radius": "5",
-//                "radius_units": "km",
+                "radius": "10",
+                "radius_units": "km",
                 "api_key": flickrApiKey
             ]
             switch self {
             case GeoQuery(let coordinate):
-                let newParameters: [String: AnyObject] = [Flickr.method: Flickr.photosSearch, Flickr.lat: coordinate.latitude, Flickr.lon: coordinate.longitude]
+                let newParameters: [String: AnyObject] = [
+                    Flickr.method: Flickr.photosSearch,
+                    Flickr.lat: coordinate.latitude,
+                    Flickr.lon: coordinate.longitude,
+                    Flickr.extras: Flickr.geo,
+                    Flickr.per_page: 200
+                ]
                 for (key, value) in newParameters {
                     parameters[key] = value
                 }
                 return ("", .GET, parameters)
             case GetGeoLocation(let photoId):
-                let newParameters: [String: AnyObject] = [Flickr.method: Flickr.geoLocation, Flickr.photoId: photoId]
+                let newParameters: [String: AnyObject] = [
+                    Flickr.method: Flickr.geoLocation,
+                    Flickr.photoId: photoId
+                ]
                 for (key, value) in newParameters {
                     parameters[key] = value
                 }
@@ -101,7 +110,6 @@ extension Router: UrlRequest {
         let urlRequest = NSMutableURLRequest(URL: url.URLByAppendingPathComponent(result.path))
         urlRequest.HTTPMethod = result.method.rawValue
         urlRequest.timeoutInterval = 20
-        return Encoding.Url.encodedURLRequest(urlRequest, parameters: result.parameters)
-        
+        return Encoding.Url.encodedURLRequest(urlRequest, parameters: result.parameters) 
     }
 }

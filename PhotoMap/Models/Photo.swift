@@ -9,52 +9,42 @@
 import Foundation
 import MapKit
 
-struct BasePhoto {
+class Photo: NSObject, MKAnnotation {
     let id: String
     let farm: Int
     let server: String
     let secret: String
     let title: String?
+    let coordinate: CLLocationCoordinate2D
     
-    init(id: String, farm: Int, server: String, secret: String, title: String?) {
+    override var description: String {
+        return "\(self.dynamicType): Id: \(id), Farm: \(farm), Server: \(server), Secret: \(secret), Title: \(title), Latitude: \(coordinate.latitude), Longitude: \(coordinate.longitude)."
+    }
+    
+    init(id: String, farm: Int, server: String, secret: String, title: String?, coordinate: CLLocationCoordinate2D) {
         self.id = id
         self.farm = farm
         self.server = server
         self.secret = secret
         self.title = title
-    }
-}
-
-class Photo: NSObject, MKAnnotation {
-    var title: String?
-    let coordinate: CLLocationCoordinate2D
-    let basePhoto: BasePhoto
-    
-    override var description: String {
-        return "\(self.dynamicType): Id: \(basePhoto.id), Farm: \(basePhoto.farm), Server: \(basePhoto.server), Secret: \(basePhoto.secret), Title: \(basePhoto.title), Latitude: \(coordinate.latitude), Longitude: \(coordinate.longitude)."
-    }
-    
-    // Flickr's API requires a call to get the photos based on location and then
-    // a second call to get the coordinates from the photo id, so we'll first create
-    // a struct with the base info and then create a class instance when we have the coordinates.
-    init(basePhoto: BasePhoto, coordinate: CLLocationCoordinate2D) {
-        self.basePhoto = basePhoto
-        self.title = basePhoto.title
         self.coordinate = coordinate
     }
     
-    class func parsePhotoJson(json: [String: AnyObject]) -> [BasePhoto]? {
+    class func parsePhotoJson(json: [String: AnyObject]) -> [Photo]? {
         if let photoJson = json["photos"] as? [String: AnyObject],
         let photos = photoJson[Flickr.photo] as? [[String: AnyObject]] {
-            var photosNearby = [BasePhoto]()
+            var photosNearby = [Photo]()
             for photo in photos {
                 if let id = photo[Flickr.id] as? String,
                     let farm = photo[Flickr.farm] as? Int,
                     let server = photo[Flickr.server] as? String,
-                    let secret = photo[Flickr.secret] as? String {
+                    let secret = photo[Flickr.secret] as? String,
+                    let latitude = photo[Flickr.latitude] as? String,
+                    let longitude = photo[Flickr.longitude] as? String,
+                    let coordinate = Photo.convertToLocation(latitude, longitude: longitude) {
                     let title = photo[Flickr.title] as? String
-                    let newBasePhoto = BasePhoto(id: id, farm: farm, server: server, secret: secret, title: title)
-                    photosNearby.append(newBasePhoto)
+                    let newPhoto = Photo(id: id, farm: farm, server: server, secret: secret, title: title, coordinate: coordinate)
+                    photosNearby.append(newPhoto)
                 }
             }
             return photosNearby
