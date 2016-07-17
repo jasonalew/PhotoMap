@@ -16,9 +16,11 @@ class MapViewController: UIViewController {
     @IBOutlet weak var mapView: MKMapView!
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         networkManager.delegate = self
-        networkManager.getPhotosByLocation(34.022276, lon: -118.410067)
+        let coordinate = CLLocationCoordinate2D(latitude: 34.022276, longitude: -118.410067)
+        networkManager.getPhotosByLocation(coordinate)
+        updateMapLocation(coordinate)
     }
 
     override func didReceiveMemoryWarning() {
@@ -30,6 +32,12 @@ class MapViewController: UIViewController {
     func loadData() {
         
     }
+    
+    func updateMapLocation(coordinate: CLLocationCoordinate2D) {
+        let regionRadius: CLLocationDistance = 1000
+        let coordinateRegion = MKCoordinateRegionMakeWithDistance(coordinate, regionRadius * 2.0, regionRadius * 2.0)
+        mapView.setRegion(coordinateRegion, animated: true)
+    }
 }
 
 extension MapViewController: NetworkManagerDelegate {
@@ -37,6 +45,6 @@ extension MapViewController: NetworkManagerDelegate {
         networkManager.getLocationForPhotos(basePhotos)
     }
     func addedCoordinatesToPhotos(photos: [Photo]) {
-        dlog(photos)
+        mapView.addAnnotations(photos)
     }
 }

@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import MapKit
 
 protocol UrlRequest {
     static var baseUrlPath: String {get}
@@ -49,7 +50,7 @@ enum HTTPMethod: String {
 }
 
 enum Router {
-    case GeoQuery(lat: Float, lon: Float)
+    case GeoQuery(coordinate: CLLocationCoordinate2D)
     case GetGeoLocation(photoId: String)
 }
 
@@ -76,13 +77,13 @@ extension Router: UrlRequest {
             var parameters: [String: AnyObject] = [
                 "format": "json",
                 "nojsoncallback": "1",
-                "radius": "0.1",
-                "radius_units": "km",
+//                "radius": "5",
+//                "radius_units": "km",
                 "api_key": flickrApiKey
             ]
             switch self {
-            case GeoQuery(let lat, let lon):
-                let newParameters: [String: AnyObject] = [Flickr.method: Flickr.photosSearch, Flickr.lat: lat, Flickr.lon: lon]
+            case GeoQuery(let coordinate):
+                let newParameters: [String: AnyObject] = [Flickr.method: Flickr.photosSearch, Flickr.lat: coordinate.latitude, Flickr.lon: coordinate.longitude]
                 for (key, value) in newParameters {
                     parameters[key] = value
                 }

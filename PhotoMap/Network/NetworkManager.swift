@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import MapKit
 
 protocol NetworkManagerDelegate: class {
     func foundPhotosByLocation(basePhotos: [BasePhoto])
@@ -25,9 +26,9 @@ class NetworkManager {
         }
     }
     
-    func getPhotosByLocation(lat: Float, lon: Float) {
+    func getPhotosByLocation(coordinate: CLLocationCoordinate2D) {
         showNetworkActivityIndicator(true)
-        let task = defaultSession.dataTaskWithRequest(Router.GeoQuery(lat: lat, lon: lon)
+        let task = defaultSession.dataTaskWithRequest(Router.GeoQuery(coordinate: coordinate)
             .urlRequest) { [weak self](data, response, error) in
             if let error = error {
                 dlog(error.localizedDescription)
@@ -65,7 +66,6 @@ class NetworkManager {
         showNetworkActivityIndicator(true)
         var photos = [Photo]()
         for (index, basePhoto) in basePhotos.enumerate() {
-            dlog("Index: \(index)")
             let task = defaultSession.dataTaskWithRequest(Router.GetGeoLocation(photoId: basePhoto.id).urlRequest, completionHandler: { [weak self](data, response, error) in
                 if let error = error {
                     dlog(error.localizedDescription)

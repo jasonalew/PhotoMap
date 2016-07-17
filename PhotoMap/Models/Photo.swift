@@ -14,7 +14,7 @@ struct BasePhoto {
     let farm: Int
     let server: String
     let secret: String
-    var title: String?
+    let title: String?
     
     init(id: String, farm: Int, server: String, secret: String, title: String?) {
         self.id = id
@@ -26,7 +26,7 @@ struct BasePhoto {
 }
 
 class Photo: NSObject, MKAnnotation {
-    
+    var title: String?
     let coordinate: CLLocationCoordinate2D
     let basePhoto: BasePhoto
     
@@ -39,6 +39,7 @@ class Photo: NSObject, MKAnnotation {
     // a struct with the base info and then create a class instance when we have the coordinates.
     init(basePhoto: BasePhoto, coordinate: CLLocationCoordinate2D) {
         self.basePhoto = basePhoto
+        self.title = basePhoto.title
         self.coordinate = coordinate
     }
     
