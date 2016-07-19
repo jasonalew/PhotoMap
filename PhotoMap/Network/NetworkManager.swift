@@ -51,6 +51,7 @@ class NetworkManager {
                             strongSelf.delegate?.foundPhotosByLocation(photos)
                         }
                     }
+                    self?.showNetworkActivityIndicator(false)
                 } catch let error as NSError {
                     dlog(error.localizedDescription)
                     self?.showNetworkActivityIndicator(false)
@@ -58,6 +59,44 @@ class NetworkManager {
             }
         }
         task.resume()
-        showNetworkActivityIndicator(false)
+    }
+    
+    func downloadPhoto(path: String?, imageView: UIImageView? = nil) {
+        var image: UIImage?
+        guard let path = path,
+            let url = NSURL(string: path) else {
+            return
+        }
+        showNetworkActivityIndicator(true)
+        let downloadTask = defaultSession.downloadTaskWithURL(url) { [weak imageView, weak self](url, response, error) in
+            if let error = error {
+                dlog(error.localizedDescription)
+                self?.showNetworkActivityIndicator(false)
+                return
+            } else {
+                guard let httpResponse = response as? NSHTTPURLResponse where
+                    httpResponse.statusCode >= 200 && httpResponse.statusCode < 400 else {
+                        self?.showNetworkActivityIndicator(false)
+                    return
+                }
+                guard let url = url else {
+                    self?.showNetworkActivityIndicator(false)
+                    return
+                }
+                
+                if let data = NSData(contentsOfURL: url),
+                    let imgDataProvider = CGDataProviderCreateWithCFData(data),
+                    let cgImage = CGImageCreateWithJPEGDataProvider(imgDataProvider, nil, true, CGColorRenderingIntent.RenderingIntentDefault) {
+                    image = UIImage(CGImage: cgImage)
+                    if let imageView = imageView {
+                        dispatch_async(dispatch_get_main_queue(), { 
+                            imageView.image = image
+                        })
+                    }
+                }
+                self?.showNetworkActivityIndicator(false)
+            }
+        }
+        downloadTask.resume()
     }
 }
