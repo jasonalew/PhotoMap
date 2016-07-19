@@ -16,7 +16,8 @@ class Photo: NSObject, MKAnnotation {
     let secret: String
     let title: String?
     let coordinate: CLLocationCoordinate2D
-    var imagePath: String?
+    var thumbImagePath: String?
+    var fullSizeImagePath: String?
     
     override var description: String {
         return "\(self.dynamicType): Id: \(id), Farm: \(farm), Server: \(server), Secret: \(secret), Title: \(title), Latitude: \(coordinate.latitude), Longitude: \(coordinate.longitude)."
@@ -30,7 +31,8 @@ class Photo: NSObject, MKAnnotation {
         self.title = title
         self.coordinate = coordinate
         super.init()
-        self.imagePath = flickrImagePath(self, size: FlickrImageSize.largeThumb)
+        self.thumbImagePath = flickrImagePath(self, size: FlickrImageSize.largeThumb)
+        self.fullSizeImagePath = flickrImagePath(self, size: FlickrImageSize.large)
     }
     
     class func parsePhotoJson(json: [String: AnyObject]) -> [Photo]? {
