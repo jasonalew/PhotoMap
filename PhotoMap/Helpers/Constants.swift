@@ -44,6 +44,10 @@ func flickrImagePath(photo: Photo, size: FlickrImageSize) -> String {
     return "https://farm\(photo.farm).staticflickr.com/\(photo.server)/\(photo.id)_\(photo.secret)_\(size.rawValue).jpg"
 }
 
+struct SegueIdentifier {
+    static let showPhoto = "ShowPhotoSegue"
+}
+
 // MARK: - Functions
 func dlog(items: Any, filePath: String = #file, function: String = #function) {
     var className = ""
