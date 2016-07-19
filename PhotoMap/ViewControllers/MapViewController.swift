@@ -14,6 +14,7 @@ class MapViewController: UIViewController {
     lazy var networkManager = NetworkManager()
     lazy var locationManager = LocationManager()
     let reuseIdentifier = "Photo"
+    var selectedPhoto: Photo?
     
     @IBOutlet weak var mapView: MKMapView!
     override func viewDidLoad() {
@@ -22,12 +23,12 @@ class MapViewController: UIViewController {
         networkManager.delegate = self
         mapView.delegate = self
         mapView.showsUserLocation = true
+        let coordinate = CLLocationCoordinate2D(latitude: 34.01911169, longitude: -118.41033742)
+        loadData(coordinate)
     }
     
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(animated)
-        let coordinate = CLLocationCoordinate2D(latitude: 34.01911169, longitude: -118.41033742)
-        loadData(coordinate)
     }
 
     override func didReceiveMemoryWarning() {
@@ -45,6 +46,16 @@ class MapViewController: UIViewController {
         let coordinateRegion = MKCoordinateRegionMakeWithDistance(coordinate, regionRadius * 2.0, regionRadius * 2.0)
         mapView.setRegion(coordinateRegion, animated: true)
     }
+    
+    // MARK: - Navigation
+    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        if segue.identifier == SegueIdentifier.showPhoto {
+            if let photoVC = segue.destinationViewController as? PhotoViewController {
+                photoVC.networkManager = networkManager
+                photoVC.photo = selectedPhoto
+            }
+        }
+    }
 }
 
 // MARK: - Map Delegate
@@ -54,13 +65,29 @@ extension MapViewController: MKMapViewDelegate {
     }
     
     func mapView(mapView: MKMapView, viewForAnnotation annotation: MKAnnotation) -> MKAnnotationView? {
+        // If it's the user location annotation, don't use the custom annotation view
+        guard !annotation.isKindOfClass(MKUserLocation) else {
+            return nil
+        }
         var annotationView: PhotoAnnotationView?
-        if let aView = mapView.dequeueReusableAnnotationViewWithIdentifier(reuseIdentifier) as? PhotoAnnotationView {
+        if let aView = mapView.dequeueReusableAnnotationViewWithIdentifier(reuseIdentifier) as? PhotoAnnotationView,
+        let photoAnnotation = annotation as? Photo {
             annotationView = aView
+            aView.fullSizeImagePath = photoAnnotation.fullSizeImagePath
+            networkManager.downloadPhoto(photoAnnotation.thumbImagePath, imageView: aView.imageView)
         } else {
             annotationView = PhotoAnnotationView(annotation: annotation, reuseIdentifier: reuseIdentifier)
         }
         return annotationView
+    }
+    
+    func mapView(mapView: MKMapView, didSelectAnnotationView view: MKAnnotationView) {
+        if let view = view as? PhotoAnnotationView,
+        let photo = view.annotation as? Photo {
+            selectedPhoto = photo
+            mapView.deselectAnnotation(view.annotation, animated: true)
+            performSegueWithIdentifier(SegueIdentifier.showPhoto, sender: self)
+        }
     }
 }
 
