@@ -29,6 +29,21 @@ struct Flickr {
     static let geoLocation = "flickr.photos.geo.getLocation"
 }
 
+enum FlickrImageSize: String {
+    case smallThumb = "s"
+    case largeThumb = "q"
+    case small = "n" // 320 on longest side
+    case medium = "z" // 640 on longest side
+    case medLarge = "c" // 800 on longest side
+    case large = "b" // 1024 on longest side
+    case xl = "k" // 2048 on longest side
+    case original = "o"
+}
+
+func flickrImagePath(photo: Photo, size: FlickrImageSize) -> String {
+    return "https://farm\(photo.farm).staticflickr.com/\(photo.server)/\(photo.id)_\(photo.secret)_\(size.rawValue).jpg"
+}
+
 // MARK: - Functions
 func dlog(items: Any, filePath: String = #file, function: String = #function) {
     var className = ""
