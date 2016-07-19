@@ -33,7 +33,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         super.init()
         locationManager.delegate = self
         locationManager.desiredAccuracy =
-            locationAccuracy != nil ? locationAccuracy! : 35
+            locationAccuracy != nil ? locationAccuracy! : kCLLocationAccuracyHundredMeters
         locationManager.activityType = .Other
         locationManager.pausesLocationUpdatesAutomatically = true
         checkLocationAuthorizationStatus()
