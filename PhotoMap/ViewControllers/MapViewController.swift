@@ -12,15 +12,22 @@ import MapKit
 class MapViewController: UIViewController {
 
     lazy var networkManager = NetworkManager()
+    lazy var locationManager = LocationManager()
+    let reuseIdentifier = "Photo"
     
     @IBOutlet weak var mapView: MKMapView!
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+        locationManager.delegate = self
         networkManager.delegate = self
-        let coordinate = CLLocationCoordinate2D(latitude: 34.022276, longitude: -118.410067)
-        networkManager.getPhotosByLocation(coordinate)
-        updateMapLocation(coordinate)
+        mapView.delegate = self
+        mapView.showsUserLocation = true
+    }
+    
+    override func viewDidAppear(animated: Bool) {
+        super.viewDidAppear(animated)
+        let coordinate = CLLocationCoordinate2D(latitude: 34.01911169, longitude: -118.41033742)
+        loadData(coordinate)
     }
 
     override func didReceiveMemoryWarning() {
@@ -28,8 +35,9 @@ class MapViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    func loadData() {
-        
+    func loadData(coordinate: CLLocationCoordinate2D) {
+        networkManager.getPhotosByLocation(coordinate)
+        updateMapLocation(coordinate)
     }
     
     func updateMapLocation(coordinate: CLLocationCoordinate2D) {
@@ -39,8 +47,33 @@ class MapViewController: UIViewController {
     }
 }
 
+// MARK: - Map Delegate
+extension MapViewController: MKMapViewDelegate {
+    func mapView(mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+        
+    }
+    
+    func mapView(mapView: MKMapView, viewForAnnotation annotation: MKAnnotation) -> MKAnnotationView? {
+        var annotationView: PhotoAnnotationView?
+        if let aView = mapView.dequeueReusableAnnotationViewWithIdentifier(reuseIdentifier) as? PhotoAnnotationView {
+            annotationView = aView
+        } else {
+            annotationView = PhotoAnnotationView(annotation: annotation, reuseIdentifier: reuseIdentifier)
+        }
+        return annotationView
+    }
+}
+
+// MARK: - Network Manager Delegate
 extension MapViewController: NetworkManagerDelegate {
     func foundPhotosByLocation(photos: [Photo]) {
         mapView.addAnnotations(photos)
+    }
+}
+
+// MARK: - Location Manager Delegate
+extension MapViewController: LocationManagerDelegate {
+    func bestEffortLocationFound(location: CLLocation) {
+//        loadData(location.coordinate)
     }
 }
