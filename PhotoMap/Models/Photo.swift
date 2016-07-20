@@ -38,6 +38,8 @@ class Photo: NSObject, MKAnnotation {
             self.description = description
         }
     }
+    
+    // MARK: - Properties
     let flickrId: FlickrId
     let flickrMetadata: FlickrMetadata
     let title: String?
@@ -48,18 +50,18 @@ class Photo: NSObject, MKAnnotation {
     override var description: String {
         return "\(self.dynamicType): FlickrId: \(flickrId), Title: \(title), Tags: \(flickrMetadata.tags), OwnerName: \(flickrMetadata.ownerName), Description: \(flickrMetadata.description), DateTaken: \(flickrMetadata.dateTaken) Latitude: \(coordinate.latitude), Longitude: \(coordinate.longitude)."
     }
-    
+    // MARK: - Init
     init(flickrId: FlickrId, flickrMetadata: FlickrMetadata, title: String?, coordinate: CLLocationCoordinate2D) {
         self.flickrId = flickrId
         self.flickrMetadata = flickrMetadata
         self.title = title
         self.coordinate = coordinate
         super.init()
-        self.thumbImagePath = flickrImagePath(self, size: FlickrImageSize.largeThumb)
+        self.thumbImagePath = flickrImagePath(self, size: FlickrImageSize.smallThumb)
         self.fullSizeImagePath = flickrImagePath(self, size: FlickrImageSize.large)
         dlog(self)
     }
-    
+    // MARK: - Parse and helpers
     class func parsePhotoJson(json: [String: AnyObject]) -> [Photo]? {
         if let photoJson = json["photos"] as? [String: AnyObject],
         let photos = photoJson[Flickr.photo] as? [[String: AnyObject]] {
