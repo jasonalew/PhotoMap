@@ -16,6 +16,15 @@ struct Flickr {
     static let lon = "lon"
     static let extras = "extras"
     static let geo = "geo"
+    static let tags = "tags"
+    static let description = "description"
+    // Use underscore syntax for calls
+    static let owner_name = "owner_name"
+    static let date_taken = "date_taken"
+    // Use oneword to parse JSON
+    static let ownername = "ownername"
+    static let datetaken = "datetaken"
+    static let content = "_content" // Use with Description dict
     static let per_page = "per_page"
     static let latitude = "latitude"
     static let longitude = "longitude"
@@ -41,7 +50,7 @@ enum FlickrImageSize: String {
 }
 
 func flickrImagePath(photo: Photo, size: FlickrImageSize) -> String {
-    return "https://farm\(photo.farm).staticflickr.com/\(photo.server)/\(photo.id)_\(photo.secret)_\(size.rawValue).jpg"
+    return "https://farm\(photo.flickrId.farm).staticflickr.com/\(photo.flickrId.server)/\(photo.flickrId.id)_\(photo.flickrId.secret)_\(size.rawValue).jpg"
 }
 
 struct SegueIdentifier {

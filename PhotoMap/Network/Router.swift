@@ -25,12 +25,20 @@ enum Encoding {
             let urlComponents = NSURLComponents(URL: request.URL!, resolvingAgainstBaseURL: false)
             var queryItems = [NSURLQueryItem]()
             for (key, value) in parameters {
-                if let value = ("\(value)").stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLPathAllowedCharacterSet()) {
+                var currentValue: AnyObject
+                // If it's an array of values, join them by a comma before encoding
+                if let valueArray = value as? [AnyObject] {
+                    currentValue = (valueArray.flatMap{String($0)}).joinWithSeparator(",")
+                } else {
+                    currentValue = value
+                }
+                if let value = ("\(currentValue)").stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLPathAllowedCharacterSet()) {
                     queryItems.append(NSURLQueryItem(name: key, value: value))
                 }
             }
             urlComponents?.queryItems = queryItems
             request.URL = urlComponents?.URL
+            dlog("Query: \(request.URL)")
         case .JSON:
             // Add JSON to the request HTTPBody
             do {
@@ -87,8 +95,14 @@ extension Router: UrlRequest {
                     Flickr.method: Flickr.photosSearch,
                     Flickr.lat: coordinate.latitude,
                     Flickr.lon: coordinate.longitude,
-                    Flickr.extras: Flickr.geo,
-                    Flickr.per_page: 200
+                    Flickr.extras: [
+                        Flickr.geo,
+                        Flickr.tags,
+                        Flickr.description,
+                        Flickr.owner_name,
+                        Flickr.date_taken
+                    ],
+                    Flickr.per_page: 40
                 ]
                 for (key, value) in newParameters {
                     parameters[key] = value

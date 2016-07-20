@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import MapKit
 
 class PhotoViewController: UIViewController {
     var photo: Photo!
@@ -19,7 +20,7 @@ class PhotoViewController: UIViewController {
         if let photoTitle = photo.title {
             title = photoTitle
         }
-        
+//        getPlacemark(photo.coordinate)
         loadData()
     }
 
@@ -31,5 +32,18 @@ class PhotoViewController: UIViewController {
     func loadData() {
         networkManager.downloadPhoto(photo.fullSizeImagePath, imageView: imageView)
     }
+    
+    func getPlacemark(coordinate: CLLocationCoordinate2D) {
+        let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        CLGeocoder().reverseGeocodeLocation(location) { (placemark, error) in
+            if let error = error {
+                dlog(error.localizedDescription)
+                return
+            } else {
+                dlog(placemark)
+            }
+        }
+    }
+    
 
 }

@@ -45,7 +45,8 @@ class NetworkManager {
                     return
                 }
                 do {
-                    if let json = try NSJSONSerialization.JSONObjectWithData(data, options: []) as? [String: AnyObject] {
+                    if let json = try NSJSONSerialization.JSONObjectWithData(
+                        data, options: []) as? [String: AnyObject] {
                         if let photos = Photo.parsePhotoJson(json),
                         let strongSelf = self {
                             strongSelf.delegate?.foundPhotosByLocation(photos)
@@ -68,7 +69,8 @@ class NetworkManager {
             return
         }
         showNetworkActivityIndicator(true)
-        let downloadTask = defaultSession.downloadTaskWithURL(url) { [weak imageView, weak self](url, response, error) in
+        let downloadTask = defaultSession.downloadTaskWithURL(url) {
+            [weak imageView, weak self](url, response, error) in
             if let error = error {
                 dlog(error.localizedDescription)
                 self?.showNetworkActivityIndicator(false)
@@ -86,7 +88,8 @@ class NetworkManager {
                 
                 if let data = NSData(contentsOfURL: url),
                     let imgDataProvider = CGDataProviderCreateWithCFData(data),
-                    let cgImage = CGImageCreateWithJPEGDataProvider(imgDataProvider, nil, true, CGColorRenderingIntent.RenderingIntentDefault) {
+                    let cgImage = CGImageCreateWithJPEGDataProvider(
+                        imgDataProvider, nil, true, CGColorRenderingIntent.RenderingIntentDefault) {
                     image = UIImage(CGImage: cgImage)
                     if let imageView = imageView {
                         dispatch_async(dispatch_get_main_queue(), { 
