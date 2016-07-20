@@ -70,15 +70,19 @@ extension MapViewController: MKMapViewDelegate {
         guard !annotation.isKindOfClass(MKUserLocation) else {
             return nil
         }
+        guard let photoAnnotation = annotation as? Photo else {
+            return nil
+        }
         var annotationView: PhotoAnnotationView?
-        if let aView = mapView.dequeueReusableAnnotationViewWithIdentifier(reuseIdentifier) as? PhotoAnnotationView,
-        let photoAnnotation = annotation as? Photo {
+        if let aView = mapView.dequeueReusableAnnotationViewWithIdentifier(reuseIdentifier) as? PhotoAnnotationView {
             annotationView = aView
-            aView.fullSizeImagePath = photoAnnotation.fullSizeImagePath
-            networkManager.downloadPhoto(photoAnnotation.thumbImagePath, imageView: aView.imageView)
         } else {
             annotationView = PhotoAnnotationView(annotation: annotation, reuseIdentifier: reuseIdentifier)
         }
+        if let annotationView = annotationView {
+            networkManager.downloadPhoto(photoAnnotation.thumbImagePath, imageView: annotationView.imageView)
+        }
+        
         return annotationView
     }
     
