@@ -32,6 +32,8 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     init(locationAccuracy: CLLocationAccuracy? = nil) {
         super.init()
         locationManager.delegate = self
+        // The default desired accuracy is fairly low since we are just trying to 
+        // get a general area to find photos
         locationManager.desiredAccuracy =
             locationAccuracy != nil ? locationAccuracy! : kCLLocationAccuracyHundredMeters
         locationManager.activityType = .Other
