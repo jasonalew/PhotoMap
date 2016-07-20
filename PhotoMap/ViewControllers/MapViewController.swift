@@ -28,6 +28,16 @@ class MapViewController: UIViewController {
         loadData(coordinate)
     }
     
+    override func viewWillAppear(animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationController?.navigationBarHidden = true
+    }
+    
+    override func viewWillDisappear(animated: Bool) {
+        super.viewWillDisappear(animated)
+        navigationController?.navigationBarHidden = false
+    }
+    
     override func viewDidAppear(animated: Bool) {
         super.viewDidAppear(animated)
     }
