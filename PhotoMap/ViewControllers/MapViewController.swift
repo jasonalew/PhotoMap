@@ -15,6 +15,8 @@ class MapViewController: UIViewController {
     lazy var locationManager = LocationManager()
     let reuseIdentifier = "Photo"
     var selectedPhoto: Photo?
+    var queryCoordinate: CLLocationCoordinate2D!
+    var locationFound = false
     
     @IBOutlet weak var mapView: MKMapView!
     
@@ -24,8 +26,6 @@ class MapViewController: UIViewController {
         networkManager.delegate = self
         mapView.delegate = self
         mapView.showsUserLocation = true
-        let coordinate = CLLocationCoordinate2D(latitude: 34.01911169, longitude: -118.41033742)
-        loadData(coordinate)
     }
     
     override func viewWillAppear(animated: Bool) {
@@ -49,7 +49,6 @@ class MapViewController: UIViewController {
     
     func loadData(coordinate: CLLocationCoordinate2D) {
         networkManager.getPhotosByLocation(coordinate)
-        updateMapLocation(coordinate)
     }
     
     func updateMapLocation(coordinate: CLLocationCoordinate2D) {
@@ -72,9 +71,23 @@ class MapViewController: UIViewController {
 // MARK: - Map Delegate
 extension MapViewController: MKMapViewDelegate {
     func mapView(mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
-        
+        guard locationFound else {
+            return
+        }
+        let newCenterCoord = mapView.region.center
+        let newCenterPoint = MKMapPointForCoordinate(newCenterCoord)
+        let queryPoint = MKMapPointForCoordinate(queryCoordinate)
+        let distance = MKMetersBetweenMapPoints(newCenterPoint, queryPoint)
+        // TODO: Get new annotations based on visible rect
+        // This is a naive solution that doesn't take into account
+        // the zoom factor of the map and purely relies on distance.
+        // The visible rect should be used.
+        if distance > Double(FlickrDefaults.radiusInKm * 1000) {
+            queryCoordinate = newCenterCoord
+            loadData(queryCoordinate)
+        }
     }
-    
+    // TODO: Cluster annotations
     func mapView(mapView: MKMapView, viewForAnnotation annotation: MKAnnotation) -> MKAnnotationView? {
         // If it's the user location annotation, don't use the custom annotation view
         guard !annotation.isKindOfClass(MKUserLocation) else {
@@ -116,6 +129,9 @@ extension MapViewController: NetworkManagerDelegate {
 // MARK: - Location Manager Delegate
 extension MapViewController: LocationManagerDelegate {
     func bestEffortLocationFound(location: CLLocation) {
-//        loadData(location.coordinate)
+        locationFound = true
+        queryCoordinate = location.coordinate
+        updateMapLocation(queryCoordinate)
+        loadData(queryCoordinate)
     }
 }

@@ -85,7 +85,7 @@ extension Router: UrlRequest {
             var parameters: [String: AnyObject] = [
                 "format": "json",
                 "nojsoncallback": "1",
-                "radius": "10",
+                "radius": "\(FlickrDefaults.radiusInKm)",
                 "radius_units": "km",
                 "api_key": flickrApiKey
             ]

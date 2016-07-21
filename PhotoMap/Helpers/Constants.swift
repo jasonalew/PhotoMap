@@ -38,6 +38,10 @@ struct Flickr {
     static let geoLocation  = "flickr.photos.geo.getLocation"
 }
 
+struct FlickrDefaults {
+    static let radiusInKm   = 20
+}
+
 enum FlickrImageSize: String {
     case smallThumb = "s" // 75x75 square
     case largeThumb = "q" // 150x150 square
