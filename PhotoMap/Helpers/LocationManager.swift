@@ -145,6 +145,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
                     delegate?.bestEffortLocationFound(bestEffortLocation)
                 }
                 locationManager.stopUpdatingLocation()
+                cancelTimer()
                 dlog("Best effort location: \(bestEffortAtLocation)")
             }
         }
