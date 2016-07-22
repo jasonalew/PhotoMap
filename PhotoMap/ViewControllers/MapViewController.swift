@@ -122,7 +122,9 @@ extension MapViewController: MKMapViewDelegate {
 // MARK: - Network Manager Delegate
 extension MapViewController: NetworkManagerDelegate {
     func foundPhotosByLocation(photos: [Photo]) {
-        mapView.addAnnotations(photos)
+        dispatch_async(dispatch_get_main_queue()) { [weak self] in
+            self?.mapView.addAnnotations(photos)
+        }
     }
 }
 
