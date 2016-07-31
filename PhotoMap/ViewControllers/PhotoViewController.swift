@@ -30,7 +30,7 @@ class PhotoViewController: UIViewController {
     }
     
     func loadData() {
-        networkManager.downloadPhoto(photo.fullSizeImagePath, imageView: imageView)
+        networkManager.downloadPhoto(photo.fullSizeImagePath, imageView: imageView, noCache: true)
     }
     
     func getPlacemark(coordinate: CLLocationCoordinate2D) {
