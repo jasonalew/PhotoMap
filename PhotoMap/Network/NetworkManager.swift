@@ -19,10 +19,21 @@ class NetworkManager {
     
     let defaultSession = NSURLSession(configuration: NSURLSessionConfiguration.defaultSessionConfiguration())
     
+    var imageCache = [String: UIImage]()
+    let maxImageCache = 80
+    
     private func showNetworkActivityIndicator(shouldShow: Bool) {
         dispatch_async(dispatch_get_main_queue()) { 
             UIApplication.sharedApplication().networkActivityIndicatorVisible = shouldShow
         }
+    }
+    
+    private func addToImageCache(path: String, image: UIImage?) {
+        // If we are at max capacity for the cache, remove the first entry
+        if imageCache.count >= maxImageCache {
+            imageCache.removeAtIndex(imageCache.startIndex)
+        }
+        imageCache[path] = image
     }
     
     func getPhotosByLocation(coordinate: CLLocationCoordinate2D) {
@@ -62,44 +73,57 @@ class NetworkManager {
         task.resume()
     }
     
-    func downloadPhoto(path: String?, imageView: UIImageView? = nil) {
+    func downloadPhoto(path: String?, imageView: UIImageView? = nil, noCache: Bool = false) {
         var image: UIImage?
         guard let path = path,
             let url = NSURL(string: path) else {
             return
         }
-        showNetworkActivityIndicator(true)
-        let downloadTask = defaultSession.downloadTaskWithURL(url) {
-            [weak imageView, weak self](url, response, error) in
-            if let error = error {
-                dlog(error.localizedDescription)
-                self?.showNetworkActivityIndicator(false)
-                return
-            } else {
-                guard let httpResponse = response as? NSHTTPURLResponse where
-                    httpResponse.statusCode >= 200 && httpResponse.statusCode < 400 else {
-                        self?.showNetworkActivityIndicator(false)
-                    return
-                }
-                guard let url = url else {
+        // Check if we have a cached image first
+        if let cachedImage = imageCache[path],
+        let imageView = imageView {
+            dispatch_async(dispatch_get_main_queue(), { 
+                imageView.image = cachedImage
+                dlog("Cached image found for path: \(path)")
+            })
+        } else {
+            showNetworkActivityIndicator(true)
+            let downloadTask = defaultSession.downloadTaskWithURL(url) {
+                [weak imageView, weak self](url, response, error) in
+                if let error = error {
+                    dlog(error.localizedDescription)
                     self?.showNetworkActivityIndicator(false)
                     return
-                }
-                
-                if let data = NSData(contentsOfURL: url),
-                    let imgDataProvider = CGDataProviderCreateWithCFData(data),
-                    let cgImage = CGImageCreateWithJPEGDataProvider(
-                        imgDataProvider, nil, true, CGColorRenderingIntent.RenderingIntentDefault) {
-                    image = UIImage(CGImage: cgImage)
-                    if let imageView = imageView {
-                        dispatch_async(dispatch_get_main_queue(), { 
-                            imageView.image = image
-                        })
+                } else {
+                    guard let httpResponse = response as? NSHTTPURLResponse where
+                        httpResponse.statusCode >= 200 && httpResponse.statusCode < 400 else {
+                            self?.showNetworkActivityIndicator(false)
+                            return
                     }
+                    guard let url = url else {
+                        self?.showNetworkActivityIndicator(false)
+                        return
+                    }
+                    
+                    if let data = NSData(contentsOfURL: url),
+                        let imgDataProvider = CGDataProviderCreateWithCFData(data),
+                        let cgImage = CGImageCreateWithJPEGDataProvider(
+                            imgDataProvider, nil, true, CGColorRenderingIntent.RenderingIntentDefault) {
+                        image = UIImage(CGImage: cgImage)
+                        if let imageView = imageView {
+                            dispatch_async(dispatch_get_main_queue(), {
+                                imageView.image = image
+                                if !noCache {
+                                    self?.addToImageCache(path, image: image)
+                                }
+                            })
+                        }
+                    }
+                    self?.showNetworkActivityIndicator(false)
                 }
-                self?.showNetworkActivityIndicator(false)
             }
+            downloadTask.resume()
         }
-        downloadTask.resume()
+        
     }
 }
