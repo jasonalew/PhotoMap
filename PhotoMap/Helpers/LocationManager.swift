@@ -8,17 +8,37 @@
 
 import UIKit
 import CoreLocation
+fileprivate func < <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l < r
+  case (nil, _?):
+    return true
+  default:
+    return false
+  }
+}
+
+fileprivate func > <T : Comparable>(lhs: T?, rhs: T?) -> Bool {
+  switch (lhs, rhs) {
+  case let (l?, r?):
+    return l > r
+  default:
+    return rhs < lhs
+  }
+}
+
 
 protocol LocationManagerDelegate: class {
-    func bestEffortLocationFound(location: CLLocation)
+    func bestEffortLocationFound(_ location: CLLocation)
 //    func foundInitialLocation(location: CLLocation)
 }
 
 class LocationManager: NSObject, CLLocationManagerDelegate {
     
     struct LocationTimeInterval {
-        static let timeout = NSTimeInterval(30)
-        static let restartAfter = NSTimeInterval(60)
+        static let timeout = TimeInterval(30)
+        static let restartAfter = TimeInterval(60)
     }
     
     // MARK: - Properties
@@ -26,7 +46,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     
     lazy var locationManager = CLLocationManager()
     var bestEffortAtLocation: CLLocation?
-    var timer: NSTimer?
+    var timer: Timer?
     
     // MARK: - Init
     init(locationAccuracy: CLLocationAccuracy? = nil) {
@@ -36,7 +56,7 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         // get a general area to find photos
         locationManager.desiredAccuracy =
             locationAccuracy != nil ? locationAccuracy! : kCLLocationAccuracyHundredMeters
-        locationManager.activityType = .Other
+        locationManager.activityType = .other
         locationManager.pausesLocationUpdatesAutomatically = true
         checkLocationAuthorizationStatus()
     }
@@ -72,8 +92,8 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         
         // Stop the Core Location Manager after delay
         cancelTimer()
-        timer = NSTimer.scheduledTimerWithTimeInterval(
-            LocationTimeInterval.timeout,
+        timer = Timer.scheduledTimer(
+            timeInterval: LocationTimeInterval.timeout,
             target: self,
             selector: #selector(LocationManager.stopUpdatingLocationWithDelayedRestart),
             userInfo: nil, repeats: false)
@@ -83,8 +103,8 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
         // The location update is suspended to limit power consumption
         locationManager.stopUpdatingLocation()
         cancelTimer()
-        timer = NSTimer.scheduledTimerWithTimeInterval(
-            LocationTimeInterval.restartAfter,
+        timer = Timer.scheduledTimer(
+            timeInterval: LocationTimeInterval.restartAfter,
             target: self,
             selector: #selector(LocationManager.startUpdatingLocation),
             userInfo: nil, repeats: false)
@@ -93,28 +113,28 @@ class LocationManager: NSObject, CLLocationManagerDelegate {
     // Add NSLocationWhenInUseUsageDescription to info.plist
     func checkLocationAuthorizationStatus() {
         switch CLLocationManager.authorizationStatus() {
-        case .NotDetermined:
+        case .notDetermined:
             startLocationServices()
             dlog("Starting location services.")
-        case .Denied, .Restricted:
+        case .denied, .restricted:
             dlog("Location services not available.")
-        case .AuthorizedWhenInUse, .AuthorizedAlways:
+        case .authorizedWhenInUse, .authorizedAlways:
             startUpdatingLocation()
         }
     }
     
-    func locationManager(manager: CLLocationManager, didChangeAuthorizationStatus status: CLAuthorizationStatus) {
+    func locationManager(_ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus) {
         switch status {
-        case .AuthorizedWhenInUse, .AuthorizedAlways:
+        case .authorizedWhenInUse, .authorizedAlways:
             locationManager.startUpdatingLocation()
-        case .Denied, .Restricted:
+        case .denied, .restricted:
             locationManager.stopUpdatingLocation()
-        case .NotDetermined:
+        case .notDetermined:
             startLocationServices()
         }
     }
     
-    func locationManager(manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else {
             dlog("No valid location")
             return

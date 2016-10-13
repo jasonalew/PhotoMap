@@ -12,7 +12,7 @@ import MapKit
 class MapViewController: UIViewController {
 
     lazy var networkManager = NetworkManager()
-    lazy var locationManager = LocationManager()
+    lazy var locationManager: LocationManager = LocationManager()
     let reuseIdentifier = "Photo"
     var selectedPhoto: Photo?
     var queryCoordinate: CLLocationCoordinate2D!
@@ -28,17 +28,17 @@ class MapViewController: UIViewController {
         mapView.showsUserLocation = true
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        navigationController?.navigationBarHidden = true
+        navigationController?.isNavigationBarHidden = true
     }
     
-    override func viewWillDisappear(animated: Bool) {
+    override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        navigationController?.navigationBarHidden = false
+        navigationController?.isNavigationBarHidden = false
     }
     
-    override func viewDidAppear(animated: Bool) {
+    override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
     }
 
@@ -47,20 +47,20 @@ class MapViewController: UIViewController {
         // Dispose of any resources that can be recreated.
     }
     
-    func loadData(coordinate: CLLocationCoordinate2D) {
+    func loadData(_ coordinate: CLLocationCoordinate2D) {
         networkManager.getPhotosByLocation(coordinate)
     }
     
-    func updateMapLocation(coordinate: CLLocationCoordinate2D) {
+    func updateMapLocation(_ coordinate: CLLocationCoordinate2D) {
         let regionRadius: CLLocationDistance = 4000
         let coordinateRegion = MKCoordinateRegionMakeWithDistance(coordinate, regionRadius * 2.0, regionRadius * 2.0)
         mapView.setRegion(coordinateRegion, animated: true)
     }
     
     // MARK: - Navigation
-    override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == SegueIdentifier.showPhoto {
-            if let photoVC = segue.destinationViewController as? PhotoViewController {
+            if let photoVC = segue.destination as? PhotoViewController {
                 photoVC.networkManager = networkManager
                 photoVC.photo = selectedPhoto
             }
@@ -70,7 +70,7 @@ class MapViewController: UIViewController {
 
 // MARK: - Map Delegate
 extension MapViewController: MKMapViewDelegate {
-    func mapView(mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+    func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
         guard locationFound else {
             return
         }
@@ -88,16 +88,16 @@ extension MapViewController: MKMapViewDelegate {
         }
     }
     // TODO: Cluster annotations
-    func mapView(mapView: MKMapView, viewForAnnotation annotation: MKAnnotation) -> MKAnnotationView? {
+    func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
         // If it's the user location annotation, don't use the custom annotation view
-        guard !annotation.isKindOfClass(MKUserLocation) else {
+        guard !annotation.isKind(of: MKUserLocation.self) else {
             return nil
         }
         guard let photoAnnotation = annotation as? Photo else {
             return nil
         }
         var annotationView: PhotoAnnotationView?
-        if let aView = mapView.dequeueReusableAnnotationViewWithIdentifier(reuseIdentifier) as? PhotoAnnotationView {
+        if let aView = mapView.dequeueReusableAnnotationView(withIdentifier: reuseIdentifier) as? PhotoAnnotationView {
             annotationView = aView
         } else {
             annotationView = PhotoAnnotationView(annotation: annotation, reuseIdentifier: reuseIdentifier)
@@ -109,20 +109,20 @@ extension MapViewController: MKMapViewDelegate {
         return annotationView
     }
     
-    func mapView(mapView: MKMapView, didSelectAnnotationView view: MKAnnotationView) {
+    func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
         if let view = view as? PhotoAnnotationView,
         let photo = view.annotation as? Photo {
             selectedPhoto = photo
             mapView.deselectAnnotation(view.annotation, animated: true)
-            performSegueWithIdentifier(SegueIdentifier.showPhoto, sender: self)
+            performSegue(withIdentifier: SegueIdentifier.showPhoto, sender: self)
         }
     }
 }
 
 // MARK: - Network Manager Delegate
 extension MapViewController: NetworkManagerDelegate {
-    func foundPhotosByLocation(photos: [Photo]) {
-        dispatch_async(dispatch_get_main_queue()) { [weak self] in
+    func foundPhotosByLocation(_ photos: [Photo]) {
+        DispatchQueue.main.async { [weak self] in
             self?.mapView.addAnnotations(photos)
         }
     }
@@ -130,7 +130,7 @@ extension MapViewController: NetworkManagerDelegate {
 
 // MARK: - Location Manager Delegate
 extension MapViewController: LocationManagerDelegate {
-    func bestEffortLocationFound(location: CLLocation) {
+    func bestEffortLocationFound(_ location: CLLocation) {
         locationFound = true
         queryCoordinate = location.coordinate
         updateMapLocation(queryCoordinate)

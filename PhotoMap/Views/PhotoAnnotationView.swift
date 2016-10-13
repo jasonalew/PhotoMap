@@ -20,7 +20,7 @@ class PhotoAnnotationView: MKAnnotationView {
 
     override init(annotation: MKAnnotation?, reuseIdentifier: String?) {
         super.init(annotation: annotation, reuseIdentifier: reuseIdentifier)
-        self.backgroundColor = UIColor.whiteColor()
+        self.backgroundColor = UIColor.white
         self.frame = CGRect(x: 0, y: 0, width: Layout.annotationEdge, height: Layout.annotationEdge)
         imageView.frame = CGRect(x: Layout.marginStandard,
                                  y: Layout.marginStandard,
@@ -36,10 +36,6 @@ class PhotoAnnotationView: MKAnnotationView {
     
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
-    }
-    
-    override init(frame: CGRect) {
-        super.init(frame: frame)
     }
 
 }

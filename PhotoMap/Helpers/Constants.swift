@@ -53,7 +53,7 @@ enum FlickrImageSize: String {
     case original   = "o"
 }
 
-func flickrImagePath(photo: Photo, size: FlickrImageSize) -> String {
+func flickrImagePath(_ photo: Photo, size: FlickrImageSize) -> String {
     return "https://farm\(photo.flickrId.farm).staticflickr.com/\(photo.flickrId.server)/\(photo.flickrId.id)_\(photo.flickrId.secret)_\(size.rawValue).jpg"
 }
 
@@ -62,10 +62,10 @@ struct SegueIdentifier {
 }
 
 // MARK: - Functions
-func dlog(items: Any, filePath: String = #file, function: String = #function) {
+func dlog(_ items: Any, filePath: String = #file, function: String = #function) {
     var className = ""
-    if let rangeOfSlash = filePath.rangeOfString("/", options: .BackwardsSearch, range: nil, locale: nil) {
-        className = String(filePath.characters.suffixFrom(rangeOfSlash.endIndex))
+    if let rangeOfSlash = filePath.range(of: "/", options: .backwards, range: nil, locale: nil) {
+        className = String(filePath.characters.suffix(from: rangeOfSlash.upperBound))
     }
     #if DEBUG
         Swift.print("\(className) - \(function) - \(items)\n")

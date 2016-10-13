@@ -33,7 +33,7 @@ class PhotoViewController: UIViewController {
         networkManager.downloadPhoto(photo.fullSizeImagePath, imageView: imageView, noCache: true)
     }
     
-    func getPlacemark(coordinate: CLLocationCoordinate2D) {
+    func getPlacemark(_ coordinate: CLLocationCoordinate2D) {
         let location = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
         CLGeocoder().reverseGeocodeLocation(location) { (placemark, error) in
             if let error = error {

@@ -15,36 +15,36 @@ protocol UrlRequest {
 }
 
 enum Encoding {
-    case Url
-    case JSON
+    case url
+    case json
     
-    func encodedURLRequest(request: NSMutableURLRequest, parameters: [String: AnyObject]) -> NSMutableURLRequest {
+    func encodedURLRequest(_ request: NSMutableURLRequest, parameters: [String: Any]) -> NSMutableURLRequest {
         switch self {
-        case .Url:
+        case .url:
             // Add the parameters to the url query
-            let urlComponents = NSURLComponents(URL: request.URL!, resolvingAgainstBaseURL: false)
-            var queryItems = [NSURLQueryItem]()
+            var urlComponents = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)
+            var queryItems = [URLQueryItem]()
             for (key, value) in parameters {
-                var currentValue: AnyObject
+                var currentValue: Any
                 // If it's an array of values, join them by a comma before encoding
                 if let valueArray = value as? [AnyObject] {
-                    currentValue = (valueArray.flatMap{String($0)}).joinWithSeparator(",")
+                    currentValue = (valueArray.flatMap{String(describing: $0)}).joined(separator: ",") as AnyObject
                 } else {
                     currentValue = value
                 }
-                if let value = ("\(currentValue)").stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLPathAllowedCharacterSet()) {
-                    queryItems.append(NSURLQueryItem(name: key, value: value))
+                if let value = ("\(currentValue)").addingPercentEncoding(withAllowedCharacters: CharacterSet.urlPathAllowed) {
+                    queryItems.append(URLQueryItem(name: key, value: value))
                 }
             }
             urlComponents?.queryItems = queryItems
-            request.URL = urlComponents?.URL
-            dlog("Query: \(request.URL)")
-        case .JSON:
+            request.url = urlComponents?.url
+            dlog("Query: \(request.url)")
+        case .json:
             // Add JSON to the request HTTPBody
             do {
-                let jsonData = try NSJSONSerialization.dataWithJSONObject(parameters, options: .PrettyPrinted)
+                let jsonData = try JSONSerialization.data(withJSONObject: parameters, options: .prettyPrinted)
                 request.setValue("application/json; charset=utf-8", forHTTPHeaderField: "Content-Type")
-                request.HTTPBody = jsonData
+                request.httpBody = jsonData
             } catch let error as NSError {
                 dlog("Error creating JSON: \(error.localizedDescription)")
             }
@@ -58,8 +58,8 @@ enum HTTPMethod: String {
 }
 
 enum Router {
-    case GeoQuery(coordinate: CLLocationCoordinate2D)
-    case GetGeoLocation(photoId: String)
+    case geoQuery(coordinate: CLLocationCoordinate2D)
+    case getGeoLocation(photoId: String)
 }
 
 struct Keys {
@@ -74,27 +74,27 @@ extension Router: UrlRequest {
     
     var flickrApiKey: String {
         // WARNING: Obtain an API key and add it to Network.plist with key: "flickrApiKey"
-        let apiPath = NSBundle.mainBundle().pathForResource("Network", ofType: "plist")
+        let apiPath = Bundle.main.path(forResource: "Network", ofType: "plist")
         let apiDict = NSDictionary(contentsOfFile: apiPath!)
         return apiDict![Keys.flickrApi] as! String
     }
     
     var urlRequest: NSMutableURLRequest {
-        let result: (path: String, method: HTTPMethod, parameters: [String: AnyObject]) = {
+        let result: (path: String, method: HTTPMethod, parameters: [String: Any]) = {
             // These are the common parameters that are needed in all calls
-            var parameters: [String: AnyObject] = [
-                "format": "json",
-                "nojsoncallback": "1",
-                "radius": "\(FlickrDefaults.radiusInKm)",
-                "radius_units": "km",
-                "api_key": flickrApiKey
+            var parameters: [String: Any] = [
+                "format": "json" as AnyObject,
+                "nojsoncallback": "1" as AnyObject,
+                "radius": "\(FlickrDefaults.radiusInKm)" as AnyObject,
+                "radius_units": "km" as AnyObject,
+                "api_key": flickrApiKey as AnyObject
             ]
             switch self {
-            case GeoQuery(let coordinate):
-                let newParameters: [String: AnyObject] = [
-                    Flickr.method: Flickr.photosSearch,
-                    Flickr.lat: coordinate.latitude,
-                    Flickr.lon: coordinate.longitude,
+            case .geoQuery(let coordinate):
+                let newParameters: [String: Any] = [
+                    Flickr.method: Flickr.photosSearch as AnyObject,
+                    Flickr.lat: coordinate.latitude as AnyObject,
+                    Flickr.lon: coordinate.longitude as AnyObject,
                     Flickr.extras: [
                         Flickr.geo,
                         Flickr.tags,
@@ -108,10 +108,10 @@ extension Router: UrlRequest {
                     parameters[key] = value
                 }
                 return ("", .GET, parameters)
-            case GetGeoLocation(let photoId):
+            case .getGeoLocation(let photoId):
                 let newParameters: [String: AnyObject] = [
-                    Flickr.method: Flickr.geoLocation,
-                    Flickr.photoId: photoId
+                    Flickr.method: Flickr.geoLocation as AnyObject,
+                    Flickr.photoId: photoId as AnyObject
                 ]
                 for (key, value) in newParameters {
                     parameters[key] = value
@@ -120,10 +120,10 @@ extension Router: UrlRequest {
             }
         }()
         
-        let url = NSURL(string: Router.baseUrlPath)!
-        let urlRequest = NSMutableURLRequest(URL: url.URLByAppendingPathComponent(result.path))
-        urlRequest.HTTPMethod = result.method.rawValue
+        let url = URL(string: Router.baseUrlPath)!
+        let urlRequest = NSMutableURLRequest(url: url.appendingPathComponent(result.path))
+        urlRequest.httpMethod = result.method.rawValue
         urlRequest.timeoutInterval = 20
-        return Encoding.Url.encodedURLRequest(urlRequest, parameters: result.parameters) 
+        return Encoding.url.encodedURLRequest(urlRequest, parameters: result.parameters) 
     }
 }

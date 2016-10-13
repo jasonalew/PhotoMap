@@ -48,7 +48,7 @@ class Photo: NSObject, MKAnnotation {
     var fullSizeImagePath: String?
     
     override var description: String {
-        return "\(self.dynamicType): FlickrId: \(flickrId), Title: \(title), Tags: \(flickrMetadata.tags), OwnerName: \(flickrMetadata.ownerName), Description: \(flickrMetadata.description), DateTaken: \(flickrMetadata.dateTaken) Latitude: \(coordinate.latitude), Longitude: \(coordinate.longitude)."
+        return "\(type(of: self)): FlickrId: \(flickrId), Title: \(title), Tags: \(flickrMetadata.tags), OwnerName: \(flickrMetadata.ownerName), Description: \(flickrMetadata.description), DateTaken: \(flickrMetadata.dateTaken) Latitude: \(coordinate.latitude), Longitude: \(coordinate.longitude)."
     }
     // MARK: - Init
     init(flickrId: FlickrId, flickrMetadata: FlickrMetadata, title: String?, coordinate: CLLocationCoordinate2D) {
@@ -62,7 +62,7 @@ class Photo: NSObject, MKAnnotation {
         dlog(self)
     }
     // MARK: - Parse and helpers
-    class func parsePhotoJson(json: [String: AnyObject]) -> [Photo]? {
+    class func parsePhotoJson(_ json: [String: AnyObject]) -> [Photo]? {
         if let photoJson = json["photos"] as? [String: AnyObject],
         let photos = photoJson[Flickr.photo] as? [[String: AnyObject]] {
             var photosNearby = [Photo]()
@@ -85,7 +85,7 @@ class Photo: NSObject, MKAnnotation {
                     }
                     let tagString = photo[Flickr.tags] as? String
                     // Flickr tags come as a space separated String
-                    let tags = tagString?.componentsSeparatedByString(" ")
+                    let tags = tagString?.components(separatedBy: " ")
                     
                     let flickrId = FlickrId(id: id, farm: farm, server: server, secret: secret)
                     let flickrMetadata = FlickrMetadata(tags: tags, ownerName: ownerName, dateTaken: dateTaken, description: description)
@@ -99,7 +99,7 @@ class Photo: NSObject, MKAnnotation {
         }
     }
     
-    class func parseLocationJson(json: [String: AnyObject]) -> CLLocationCoordinate2D? {
+    class func parseLocationJson(_ json: [String: AnyObject]) -> CLLocationCoordinate2D? {
         if let photoJson = json[Flickr.photo] as? [String: AnyObject],
         let location = photoJson[Flickr.location] as? [String: AnyObject],
         let latitude = location[Flickr.latitude] as? String,
@@ -110,7 +110,7 @@ class Photo: NSObject, MKAnnotation {
         }
     }
     
-    class func convertToLocation(latitude: String, longitude: String) -> CLLocationCoordinate2D? {
+    class func convertToLocation(_ latitude: String, longitude: String) -> CLLocationCoordinate2D? {
         if let latitude = Double(latitude), let longitude = Double(longitude) {
             return CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
         }
