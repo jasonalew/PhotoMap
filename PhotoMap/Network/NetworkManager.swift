@@ -13,27 +13,25 @@ protocol NetworkManagerDelegate: class {
     func foundPhotosByLocation(_ basePhotos: [Photo])
 }
 
+enum NetworkError: Error {
+    case InvalidServerResponse
+    case InvalidData
+}
+
 class NetworkManager {
-    
+    // MARK: - Properties
     weak var delegate: NetworkManagerDelegate?
     
     let defaultSession = URLSession(configuration: URLSessionConfiguration.default)
     
-    var imageCache = [String: UIImage]()
-    let maxImageCache = 80
+    var imageCache = URLCache()
+    
+    // MARK: - Functions
     
     fileprivate func showNetworkActivityIndicator(_ shouldShow: Bool) {
         DispatchQueue.main.async { 
             UIApplication.shared.isNetworkActivityIndicatorVisible = shouldShow
         }
-    }
-    
-    fileprivate func addToImageCache(_ path: String, image: UIImage?) {
-        // If we are at max capacity for the cache, remove the first entry
-        if imageCache.count >= maxImageCache {
-            imageCache.remove(at: imageCache.startIndex)
-        }
-        imageCache[path] = image
     }
     
     func getPhotosByLocation(_ coordinate: CLLocationCoordinate2D) {
@@ -46,12 +44,12 @@ class NetworkManager {
                 return
             } else if let httpResponse = response as? HTTPURLResponse {
                 guard httpResponse.statusCode >= 200 && httpResponse.statusCode < 400 else {
-                    dlog("Invalid server response")
                     self?.showNetworkActivityIndicator(false)
+                    dlog(NetworkError.InvalidServerResponse)
                     return
                 }
                 guard let data = data else {
-                    dlog("Couldn't get data")
+                    dlog(NetworkError.InvalidData)
                     self?.showNetworkActivityIndicator(false)
                     return
                 }
@@ -74,56 +72,64 @@ class NetworkManager {
     }
     
     func downloadPhoto(_ path: String?, imageView: UIImageView? = nil, noCache: Bool = false) {
-        var image: UIImage?
         guard let path = path,
-            let url = URL(string: path) else {
+            let photoUrl = URL(string: path) else {
             return
         }
+        
         // Check if we have a cached image first
-        if let cachedImage = imageCache[path],
+        let request = URLRequest(url: photoUrl)
+        if let cachedResponse = imageCache.cachedResponse(for: request),
         let imageView = imageView {
-            DispatchQueue.main.async(execute: { 
-                imageView.image = cachedImage
+            DispatchQueue.main.async(execute: {
+                imageView.image = self.imageFrom(data: cachedResponse.data)
                 dlog("Cached image found for path: \(path)")
             })
         } else {
             showNetworkActivityIndicator(true)
-            let downloadTask = defaultSession.downloadTask(with: url, completionHandler: {
+            let downloadTask = defaultSession.downloadTask(with: photoUrl, completionHandler: {
                 [weak imageView, weak self](url, response, error) in
                 if let error = error {
                     dlog(error.localizedDescription)
                     self?.showNetworkActivityIndicator(false)
                     return
                 } else {
-                    guard let httpResponse = response as? HTTPURLResponse ,
+                    guard let response = response,
+                    let httpResponse = response as? HTTPURLResponse,
                         httpResponse.statusCode >= 200 && httpResponse.statusCode < 400 else {
                             self?.showNetworkActivityIndicator(false)
                             return
                     }
-                    guard let url = url else {
+                    guard let downloadUrl = url else {
                         self?.showNetworkActivityIndicator(false)
                         return
                     }
                     
-                    if let data = try? Data(contentsOf: url),
-                        let imgDataProvider = CGDataProvider(data: data as CFData),
-                        let cgImage = CGImage(
-                            jpegDataProviderSource: imgDataProvider, decode: nil, shouldInterpolate: true, intent: CGColorRenderingIntent.defaultIntent) {
-                        image = UIImage(cgImage: cgImage)
-                        if let imageView = imageView {
+                    if let data = try? Data(contentsOf: downloadUrl),
+                        let image = self?.imageFrom(data: data),
+                        let imageView = imageView {
                             DispatchQueue.main.async(execute: {
                                 imageView.image = image
                                 if !noCache {
-                                    self?.addToImageCache(path, image: image)
+                                    // Add the response to the cache
+                                    let cachedResponse = CachedURLResponse(response: response, data: data)
+                                    self?.imageCache.storeCachedResponse(cachedResponse, for: URLRequest(url: photoUrl))
                                 }
                             })
-                        }
                     }
                     self?.showNetworkActivityIndicator(false)
                 }
             }) 
             downloadTask.resume()
         }
-        
+    }
+    
+    func imageFrom(data: Data) -> UIImage? {
+        if let imgDataProvider = CGDataProvider(data: data as CFData),
+        let cgImage = CGImage(
+        jpegDataProviderSource: imgDataProvider, decode: nil, shouldInterpolate: true, intent: CGColorRenderingIntent.defaultIntent) {
+            return UIImage(cgImage: cgImage)
+        }
+        return nil
     }
 }
